@@ -26,6 +26,7 @@ class ViewController: UIViewController {
     private var selectedViewImage: UIView?
     private var swipeGesture: UISwipeGestureRecognizer!
     @IBOutlet weak var swipeLabel: UILabel!
+    @IBOutlet weak var layoutView: UIView!
     
     override func viewDidLoad() {
         super.viewDidLoad()
@@ -46,6 +47,7 @@ class ViewController: UIViewController {
         
         swipeGesture = UISwipeGestureRecognizer(target: self, action: #selector(handleSwipe))
         self.view.addGestureRecognizer(swipeGesture)
+        updateSwipeDirection()
         
         for stack in grid.subviews {
             for view in stack.subviews {
@@ -72,7 +74,8 @@ class ViewController: UIViewController {
     }
     
     @objc func handleSwipe() {
-        let activityView = UIActivityViewController(activityItems: [ "Test" ], applicationActivities: nil)
+        let activityView = UIActivityViewController(activityItems: [ layoutView.asImage() ], applicationActivities: nil)
+        
         self.present(activityView, animated: true, completion: nil)
     }
     
@@ -135,7 +138,6 @@ extension ViewController: UIImagePickerControllerDelegate, UINavigationControlle
         
         if let image = info[UIImagePickerController.InfoKey.editedImage] as? UIImage {
             print(image)
-            // TODO: Change this ...
             let imageView = (self.selectedViewImage as! UIImageView)
             imageView.image = image
             imageView.contentMode = .scaleAspectFill
@@ -149,3 +151,19 @@ extension ViewController: UIImagePickerControllerDelegate, UINavigationControlle
     }
 }
 
+extension UIView {
+    func asImage() -> UIImage {
+        if #available(iOS 10.0, *) {
+            let renderer = UIGraphicsImageRenderer(bounds: bounds)
+            return renderer.image { rendererContext in
+                layer.render(in: rendererContext.cgContext)
+            }
+        } else {
+            UIGraphicsBeginImageContext(self.frame.size)
+            self.layer.render(in:UIGraphicsGetCurrentContext()!)
+            let image = UIGraphicsGetImageFromCurrentImageContext()
+            UIGraphicsEndImageContext()
+            return UIImage(cgImage: image!.cgImage!)
+        }
+    }
+}
